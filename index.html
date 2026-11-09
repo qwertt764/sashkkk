@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Самой крутой, хорошей и красивой</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(circle at 50% 10%, #1a1a2e 0%, #0d0d18 65%, #08080f 100%);
+    color: #f1f5f9;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3vh 4vw;
+  }
+
+  /* фон-канвас с частицами */
+  #bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* луна */
+  .moon {
+    position: fixed;
+    top: 6vh;
+    right: 7vw;
+    width: clamp(60px, 12vw, 130px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, #ffffff 0%, #eef2f7 55%, #cbd5e1 100%);
+    box-shadow:
+      0 0 40px rgba(255,255,255,.35),
+      0 0 90px rgba(255,255,255,.22),
+      0 0 140px rgba(255,255,255,.12);
+    z-index: 1;
+    pointer-events: none;
+    animation: moonGlow 6s ease-in-out infinite;
+  }
+  .moon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 68% 30%, rgba(15,23,42,.10) 7%, transparent 8%),
+      radial-gradient(circle at 40% 62%, rgba(15,23,42,.08) 11%, transparent 12%),
+      radial-gradient(circle at 58% 78%, rgba(15,23,42,.07) 6%, transparent 7%),
+      radial-gradient(circle at 30% 35%, rgba(15,23,42,.05) 4%, transparent 5%);
+  }
+  @keyframes moonGlow {
+    0%, 100% {
+      box-shadow:
+        0 0 40px rgba(255,255,255,.35),
+        0 0 90px rgba(255,255,255,.22),
+        0 0 140px rgba(255,255,255,.12);
+    }
+    50% {
+      box-shadow:
+        0 0 50px rgba(255,255,255,.48),
+        0 0 110px rgba(255,255,255,.30),
+        0 0 170px rgba(255,255,255,.16);
+    }
+  }
+
+  /* контент */
+  .content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(16px, 3.5vh, 40px);
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(20px, 4.6vw, 46px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fbbf24 0%, #f43f5e 55%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(251,191,36,.12);
+  }
+
+  .photo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: min(85vw, 500px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 22px 60px rgba(0,0,0,.65),
+      0 0 0 1px rgba(251,191,36,.22),
+      0 0 70px rgba(244,63,94,.14);
+    background: rgba(20, 20, 35, .6);
+  }
+  .photo-wrap img {
+    display: block;
+    max-width: min(85vw, 500px);
+    max-height: 52vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* заглушка, если файла photo.jpg ещё нет */
+  .photo-wrap.empty {
+    width: min(80vw, 420px);
+    height: 300px;
+    background: rgba(30, 30, 50, .5);
+    border: 2px dashed rgba(148,163,184,.35);
+  }
+  .photo-wrap.empty img { display: none; }
+  .photo-wrap.empty::after {
+    content: 'Положи сюда photo.jpg (рядом с index.html)';
+    color: #94a3b8;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 24px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="moon"></div>
+
+<main class="content">
+  <h1>Ты самая крутая, хорошая и красивая</h1>
+  <div class="photo-wrap">
+    <img src="photo.jpg.png"">
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  const photoWrap = document.querySelector('.photo-wrap');
+  const photoImg = photoWrap.querySelector('img');
+
+  // если файла нет — показываем аккуратную заглушку
+  if (photoImg.complete && photoImg.naturalWidth === 0) {
+    photoWrap.classList.add('empty');
+  }
+  photoImg.addEventListener('error', () => photoWrap.classList.add('empty'));
+
+  let W = 0, H = 0;
+  const stars = [];
+  const hearts = [];
+
+  function makeStar() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.6 + Math.random() * 1.8,
+      baseAlpha: 0.35 + Math.random() * 0.55,
+      amp: 0.2 + Math.random() * 0.35,
+      speed: 0.6 + Math.random() * 1.8,
+      phase: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 0.08,
+      vy: (Math.random() - 0.5) * 0.06
+    };
+  }
+
+  function makeHeart(spawnAnywhere) {
+    return {
+      x: Math.random() * W,
+      y: spawnAnywhere ? Math.random() * H : H + 30,
+      size: 8 + Math.random() * 16,
+      speed: 0.15 + Math.random() * 0.4,
+      swayAmp: 8 + Math.random() * 22,
+      swaySpeed: 0.4 + Math.random() * 0.9,
+      phase: Math.random() * Math.PI * 2,
+      alpha: 0.3 + Math.random() * 0.5,
+      color: Math.random() < 0.5 ? '#f43f5e' : '#ec4899'
+    };
+  }
+
+  function rebuildParticles() {
+    stars.length = 0;
+    hearts.length = 0;
+    const starCount = Math.max(30, Math.round((W * H) / 14000));
+    const heartCount = Math.max(8, Math.round((W * H) / 65000));
+    for (let i = 0; i < starCount; i++) stars.push(makeStar());
+    for (let i = 0; i < heartCount; i++) hearts.push(makeHeart(true));
+  }
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (stars.length === 0) rebuildParticles();
+    else {
+      // пересоздаём при существенном изменении размера
+      rebuildParticles();
+    }
+  }
+
+  function drawStar(s, t) {
+    const a = s.baseAlpha + s.amp * Math.sin(t * s.speed + s.phase);
+    ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHeart(h, t) {
+    const x = h.x + Math.sin(t * h.swaySpeed + h.phase) * h.swayAmp;
+    const y = h.y;
+    const s = h.size;
+    ctx.globalAlpha = h.alpha;
+    ctx.fillStyle = h.color;
+    ctx.beginPath();
+    ctx.moveTo(x, y + s * 0.30);
+    ctx.bezierCurveTo(x - s, y - s * 0.50, x - s * 0.50, y - s * 1.10, x, y - s * 0.40);
+    ctx.bezierCurveTo(x + s * 0.50, y - s * 1.10, x + s, y - s * 0.50, x, y + s * 0.30);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  let lastT = 0;
+  function animate(now) {
+    const t = now / 1000;
+    const dt = lastT ? Math.min(now - lastT, 60) : 16;
+    lastT = now;
+
+    ctx.clearRect(0, 0, W, H);
+
+    for (const s of stars) {
+      s.x += s.vx * (dt / 16);
+      s.y += s.vy * (dt / 16);
+      if (s.x < -5) s.x = W + 5;
+      if (s.x > W + 5) s.x = -5;
+      if (s.y < -5) s.y = H + 5;
+      if (s.y > H + 5) s.y = -5;
+      drawStar(s, t);
+    }
+
+    for (const h of hearts) {
+      h.y -= h.speed * (dt / 16);
+      if (h.y < -h.size * 2) {
+        h.y = H + h.size * 2;
+        h.x = Math.random() * W;
+      }
+      drawHeart(h, t);
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(animate);
+})();
+</script>
+
+</body>
+</html>
